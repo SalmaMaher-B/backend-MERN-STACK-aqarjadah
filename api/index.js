@@ -72,8 +72,17 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-// ⛔ لازم await
-await connectDB();
+// Wrap DB connection in async function
+const startServer = async () => {
+  try {
+    await connectDB();
+    console.log("MongoDB connected");
+  } catch (err) {
+    console.error("DB connection failed:", err);
+  }
+};
+
+startServer();
 
 app.get("/", (req, res) => {
   res.send("API is running on Vercel");
@@ -83,3 +92,5 @@ app.use("/api/auth", authRoute);
 app.use("/api/ads", adRoute);
 
 export default app;
+
+
