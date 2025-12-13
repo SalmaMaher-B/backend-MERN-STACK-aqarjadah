@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "index.js": {
-      "runtime": "nodejs24"
-    }
-  },
   "routes": [
     {
       "src": "/(.*)",
