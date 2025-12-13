@@ -1,26 +1,15 @@
 {
   "version": 2,
-  "functions": {
-    "api/server.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/api/server.js"
+      "src": "api/server.js",
+      "use": "@vercel/node"
     }
   ],
-  "headers": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://aqarjadah-salma-s-mern-stack.vercel.app" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With" },
-        { "key": "Access-Control-Allow-Credentials", "value": "true" }
-      ]
+      "src": "/(.*)",
+      "dest": "api/server.js"
     }
   ]
 }
