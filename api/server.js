@@ -192,7 +192,6 @@
 
 // // Export for Vercel
 // export default app;
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -207,7 +206,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://aqarjadah-salma-s-mern-stack.vercel.app/", // ⚠️ غيري ده!
+      "https://your-frontend-url.vercel.app", // ⚠️ غيري ده!
       "http://localhost:3000",
       "http://localhost:5173",
     ],
