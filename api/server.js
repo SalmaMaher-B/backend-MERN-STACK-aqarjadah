@@ -206,7 +206,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://your-frontend-url.vercel.app", // ⚠️ غيري ده!
+      "https://aqarjadah-salma-s-mern-stack.vercel.app", // ⚠️ غيري ده!
       "http://localhost:3000",
       "http://localhost:5173",
     ],
@@ -320,3 +320,4 @@ app.use((err, req, res, next) => {
 
 // Export for Vercel
 export default app;
+
