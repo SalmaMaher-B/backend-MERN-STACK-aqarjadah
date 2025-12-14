@@ -1,15 +1,12 @@
-import express from "express";
+// import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoute from "./routes/authRoute.js";
 import adRoute from "./routes/adRoute.js";
 
-dotenv.config();
-
 const app = express();
 
-// ✅ CORS
+/* ================= CORS (مهم جداً) ================= */
 app.use(cors({
   origin: "https://aqarjadah-salma-s-mern-stack.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -17,12 +14,17 @@ app.use(cors({
   credentials: true
 }));
 
+// ✅ رد على preflight
+app.options("*", cors());
+
+/* =================================================== */
+
 app.use(express.json({ limit: "10mb" }));
 
-// ✅ Connect MongoDB (Serverless Safe)
+// DB
 await connectDB();
 
-// ✅ Test Route
+// Test
 app.get("/", (req, res) => {
   res.status(200).send("✅ API is running on Vercel");
 });
@@ -31,5 +33,4 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoute);
 app.use("/api/ads", adRoute);
 
-// ❌ ممنوع app.listen على Vercel
 export default app;
