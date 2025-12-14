@@ -2,10 +2,8 @@
   "version": 2,
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/server.js",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      "src": "/(.*)",
+      "dest": "/api/server.js"
     }
   ]
-
 }
