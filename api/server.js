@@ -72,7 +72,7 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS مظبوط للـ production والـ development
+// CORS
 app.use(
   cors({
     origin: [
@@ -84,12 +84,10 @@ app.use(
   })
 );
 
-// ✅ Handle preflight OPTIONS لكل الـ routes (مهم جدًا على Vercel)
 app.options("*", cors());
-
 app.use(express.json());
 
-// ✅ MongoDB Connection محسنة لـ Serverless (تجنب connections كتير)
+// MongoDB Connection - Serverless
 let cached = global.mongoose;
 
 if (!cached) {
@@ -111,6 +109,10 @@ async function connectToDatabase() {
       .then((mongoose) => {
         console.log("✅ MongoDB Connected");
         return mongoose;
+      })
+      .catch((err) => {
+        console.error("❌ MongoDB Error:", err);
+        throw err;
       });
   }
 
@@ -124,9 +126,13 @@ async function connectToDatabase() {
   return cached.conn;
 }
 
-// ✅ Fake admin login
-const adminUser = { email: "admin@balady.com", password: "607080" };
+// Fake admin
+const adminUser = {
+  email: "admin@balady.com",
+  password: "607080",
+};
 
+// Login Route
 app.post("/api/login", async (req, res) => {
   try {
     await connectToDatabase();
@@ -142,37 +148,47 @@ app.post("/api/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid Credentials" });
   } catch (error) {
     console.error("Login error:", error);
-    return res.status(500).json({ message: "Server Error" });
+    return res.status(500).json({ message: "Server Error", error: error.message });
   }
 });
 
-// ✅ Homepage
+// Homepage
 app.get("/", async (req, res) => {
   try {
     await connectToDatabase();
-    res.send("أهلاً بك في Backend Balady! السيرفر شغال 🚀");
+    res.json({ 
+      message: "أهلاً بك في Backend Balady! السيرفر شغال 🚀",
+      status: "OK",
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    res.status(500).send("Database connection failed");
+    console.error("Homepage error:", error);
+    res.status(500).json({ 
+      message: "Database connection failed", 
+      error: error.message 
+    });
   }
 });
 
-// ✅ License routes (مع connect لكل request)
+// ✅ License Routes - الطريقة الصح
 app.use("/api/licenses", async (req, res, next) => {
   try {
     await connectToDatabase();
-    licenseRoutes(req, res, next);
+    next();
   } catch (error) {
-    console.error("DB connection error in licenses:", error);
-    res.status(500).json({ message: "Database Error" });
+    console.error("DB connection error:", error);
+    res.status(500).json({ message: "Database Error", error: error.message });
   }
-});
+}, licenseRoutes); // ✅ مرر الـ router مباشرة
 
-// ✅ Error handling
+// Error handling
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
-  res.status(500).json({ message: "Internal Server Error" });
+  res.status(500).json({ 
+    message: "Internal Server Error", 
+    error: err.message 
+  });
 });
 
-// ❌ لا app.listen أبدًا على Vercel
+// Export for Vercel
 export default app;
-
