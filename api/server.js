@@ -193,13 +193,11 @@
 // // Export for Vercel
 // export default app;
 
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import adRoutes from "../routes/adRoute.js";
 
 dotenv.config();
 
@@ -209,7 +207,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://your-frontend-url.vercel.app", // غيري ده بالـ frontend URL بتاعك
+      "https://aqarjadah-salma-s-mern-stack.vercel.app/", // ⚠️ غيري ده!
       "http://localhost:3000",
       "http://localhost:5173",
     ],
@@ -246,7 +244,7 @@ async function connectToDatabase() {
         return mongoose;
       })
       .catch((err) => {
-        console.error("❌ MongoDB Error:", err);
+        console.error("❌ MongoDB Connection Error:", err.message);
         throw err;
       });
   }
@@ -255,23 +253,40 @@ async function connectToDatabase() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error("❌ Database connection failed:", e);
     throw e;
   }
 
   return cached.conn;
 }
 
-// Homepage
+// ✅ Health Check - مهم جداً!
 app.get("/", async (req, res) => {
   try {
-    await connectToDatabase();
     res.json({ 
       message: "Backend is running! 🚀",
       status: "OK",
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error("Homepage error:", error);
+    console.error("Health check error:", error);
+    res.status(500).json({ 
+      message: "Error", 
+      error: error.message 
+    });
+  }
+});
+
+// ✅ Test DB Connection
+app.get("/api/test", async (req, res) => {
+  try {
+    await connectToDatabase();
+    res.json({ 
+      message: "Database connected successfully!",
+      status: "OK"
+    });
+  } catch (error) {
+    console.error("DB test error:", error);
     res.status(500).json({ 
       message: "Database connection failed", 
       error: error.message 
@@ -279,46 +294,26 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Login Route (للأدمن)
-app.post("/api/login", async (req, res) => {
-  try {
-    await connectToDatabase();
-    const { email, password } = req.body;
-
-    // Admin credentials
-    const ADMIN_EMAIL = "admin@gmail.com";
-    const ADMIN_PASSWORD = "admin123"; // غيري ده لباسورد قوي
-
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-        expiresIn: "7d",
-      });
-      return res.json({ token, email });
-    }
-
-    return res.status(401).json({ message: "Invalid Credentials" });
-  } catch (error) {
-    console.error("Login error:", error);
-    return res.status(500).json({ message: "Server Error", error: error.message });
-  }
-});
-
-// Ads Routes
-import adsRouter from "../routes/ads.js";
+// ✅ Ads Routes
 app.use("/api/ads", async (req, res, next) => {
   try {
     await connectToDatabase();
     next();
   } catch (error) {
-    console.error("DB connection error:", error);
-    res.status(500).json({ message: "Database Error", error: error.message });
+    console.error("DB connection error in ads route:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Database Error", 
+      error: error.message 
+    });
   }
-}, adsRouter);
+}, adRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({ 
+    success: false,
     message: "Internal Server Error", 
     error: err.message 
   });
