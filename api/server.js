@@ -61,263 +61,33 @@
 // export default app;
 
 
-// import express from "express";
-// import mongoose from "mongoose";
-// import cors from "cors";
-// import jwt from "jsonwebtoken";
-// import dotenv from "dotenv";
-// import licenseRoutes from "../routes/license.js";
 
-// dotenv.config();
-
-// const app = express();
-
-// // CORS
-// app.use(
-//   cors({
-//     origin: [
-//       "https://ebalady-momra-gov-sa-commercial-fac.vercel.app",
-//       "http://localhost:5173",
-//     ],
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//     credentials: true,
-//   })
-// );
-
-// app.options("*", cors());
-// app.use(express.json());
-
-// // MongoDB Connection - Serverless
-// let cached = global.mongoose;
-
-// if (!cached) {
-//   cached = global.mongoose = { conn: null, promise: null };
-// }
-
-// async function connectToDatabase() {
-//   if (cached.conn) {
-//     return cached.conn;
-//   }
-
-//   if (!cached.promise) {
-//     const opts = {
-//       bufferCommands: false,
-//     };
-
-//     cached.promise = mongoose
-//       .connect(process.env.MONGO_URI, opts)
-//       .then((mongoose) => {
-//         console.log("✅ MongoDB Connected");
-//         return mongoose;
-//       })
-//       .catch((err) => {
-//         console.error("❌ MongoDB Error:", err);
-//         throw err;
-//       });
-//   }
-
-//   try {
-//     cached.conn = await cached.promise;
-//   } catch (e) {
-//     cached.promise = null;
-//     throw e;
-//   }
-
-//   return cached.conn;
-// }
-
-// // Fake admin
-// const adminUser = {
-//   email: "admin@balady.com",
-//   password: "607080",
-// };
-
-// // Login Route
-// app.post("/api/login", async (req, res) => {
-//   try {
-//     await connectToDatabase();
-//     const { email, password } = req.body;
-
-//     if (email === adminUser.email && password === adminUser.password) {
-//       const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-//         expiresIn: "1h",
-//       });
-//       return res.json({ token, email });
-//     }
-
-//     return res.status(401).json({ message: "Invalid Credentials" });
-//   } catch (error) {
-//     console.error("Login error:", error);
-//     return res.status(500).json({ message: "Server Error", error: error.message });
-//   }
-// });
-
-// // Homepage
-// app.get("/", async (req, res) => {
-//   try {
-//     await connectToDatabase();
-//     res.json({ 
-//       message: "أهلاً بك في Backend Balady! السيرفر شغال 🚀",
-//       status: "OK",
-//       timestamp: new Date().toISOString()
-//     });
-//   } catch (error) {
-//     console.error("Homepage error:", error);
-//     res.status(500).json({ 
-//       message: "Database connection failed", 
-//       error: error.message 
-//     });
-//   }
-// });
-
-// // ✅ License Routes - الطريقة الصح
-// app.use("/api/licenses", async (req, res, next) => {
-//   try {
-//     await connectToDatabase();
-//     next();
-//   } catch (error) {
-//     console.error("DB connection error:", error);
-//     res.status(500).json({ message: "Database Error", error: error.message });
-//   }
-// }, licenseRoutes); // ✅ مرر الـ router مباشرة
-
-// // Error handling
-// app.use((err, req, res, next) => {
-//   console.error("Unhandled error:", err);
-//   res.status(500).json({ 
-//     message: "Internal Server Error", 
-//     error: err.message 
-//   });
-// });
-
-// // Export for Vercel
-// export default app;
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
-import adRoutes from "../routes/adRoute.js";
-
-dotenv.config();
+import connectDB from "../config/db.js";
+import authRoute from "../routes/authRoute.js";
+import adRoute from "../routes/adRoute.js";
 
 const app = express();
 
-// CORS
-app.use(
-  cors({
-    origin: [
-      "https://aqarjadah-salma-s-mern-stack.vercel.app", // ⚠️ غيري ده!
-      "http://localhost:3000",
-      "http://localhost:5173",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: "https://aqarjadah-salma-s-mern-stack.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 
-app.options("*", cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// MongoDB Connection - Serverless
-let cached = global.mongoose;
+app.use(express.json({ limit: "10mb" }));
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+// ✅ connect DB once
+connectDB();
 
-async function connectToDatabase() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached.promise = mongoose
-      .connect(process.env.MONGO_URI, opts)
-      .then((mongoose) => {
-        console.log("✅ MongoDB Connected");
-        return mongoose;
-      })
-      .catch((err) => {
-        console.error("❌ MongoDB Connection Error:", err.message);
-        throw err;
-      });
-  }
-
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    console.error("❌ Database connection failed:", e);
-    throw e;
-  }
-
-  return cached.conn;
-}
-
-// ✅ Health Check - مهم جداً!
-app.get("/", async (req, res) => {
-  try {
-    res.json({ 
-      message: "Backend is running! 🚀",
-      status: "OK",
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error("Health check error:", error);
-    res.status(500).json({ 
-      message: "Error", 
-      error: error.message 
-    });
-  }
+app.get("/", (req, res) => {
+  res.status(200).send("✅ API is running on Vercel");
 });
 
-// ✅ Test DB Connection
-app.get("/api/test", async (req, res) => {
-  try {
-    await connectToDatabase();
-    res.json({ 
-      message: "Database connected successfully!",
-      status: "OK"
-    });
-  } catch (error) {
-    console.error("DB test error:", error);
-    res.status(500).json({ 
-      message: "Database connection failed", 
-      error: error.message 
-    });
-  }
-});
+app.use("/api/auth", authRoute);
+app.use("/api/ads", adRoute);
 
-// ✅ Ads Routes
-app.use("/api/ads", async (req, res, next) => {
-  try {
-    await connectToDatabase();
-    next();
-  } catch (error) {
-    console.error("DB connection error in ads route:", error);
-    res.status(500).json({ 
-      success: false,
-      message: "Database Error", 
-      error: error.message 
-    });
-  }
-}, adRoutes);
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({ 
-    success: false,
-    message: "Internal Server Error", 
-    error: err.message 
-  });
-});
-
-// Export for Vercel
 export default app;
-
